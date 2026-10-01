@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>سکوتِ عددها</title>
+<meta name="description" content="سفری کوتاه در هندسهٔ پنهان طبیعت — نسبت طلایی، فیبوناچی، فراکتال و بینهایت.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90' fill='%23d9a441'%3E%CF%86%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@200;300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   سکوتِ عددها  —  پایه
+   ============================================================ */
+:root{
+  --bg:#08080b;
+  --bg-2:#0d0d12;
+  --ink:#ece7dd;
+  --ink-dim:#9b958a;
+  --ink-faint:#5a554d;
+  --gold:#d9a441;
+  --gold-soft:rgba(217,164,65,.34);
+  --gold-glow:rgba(217,164,65,.13);
+  --line:rgba(236,231,221,.075);
+  --sans:'Vazirmatn',system-ui,-apple-system,'Segoe UI',Tahoma,sans-serif;
+  --mono:ui-monospace,'SFMono-Regular','JetBrains Mono',Menlo,Consolas,monospace;
+  --maxw:760px;
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+
+html{
+  scroll-behavior:smooth;
+  -webkit-text-size-adjust:100%;
+}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:16px;
+  line-height:1.95;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+::selection{background:rgba(217,164,65,.28);color:#fff}
+
+img,svg,canvas{display:block;max-width:100%}
+
+/* ============================================================
+   بافت — دانه‌های نور
+   ============================================================ */
+.grain{
+  position:fixed;inset:-50%;z-index:900;
+  pointer-events:none;
+  opacity:.032;
+  mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:grainShift 6s steps(6) infinite;
+}
+@keyframes grainShift{
+  0%{transform:translate(0,0)}   16%{transform:translate(-3%,-2%)}
+  33%{transform:translate(2%,3%)} 50%{transform:translate(-2%,2%)}
+  66%{transform:translate(3%,-1%)}83%{transform:translate(-1%,-3%)}
+  100%{transform:translate(0,0)}
+}
+
+/* ============================================================
+   نوار پیشرفت
+   ============================================================ */
+.progress{
+  position:fixed;top:0;right:0;z-index:950;
+  height:2px;width:0;
+  background:linear-gradient(270deg,transparent,var(--gold));
+  box-shadow:0 0 12px var(--gold-soft);
+  will-change:width;
+}
+
+/* ============================================================
+   نوار بالا
+   ============================================================ */
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:800;
+  display:flex;align-items:center;gap:10px;
+  padding:18px 26px;
+  font-size:.78rem;
+  color:var(--ink-faint);
+  pointer-events:none;
+  opacity:0;
+  transform:translateY(-8px);
+  transition:opacity .8s var(--ease),transform .8s var(--ease);
+}
+.topbar.show{opacity:1;transform:none}
+.topbar .mark{
+  font-family:var(--mono);
+  color:var(--gold);
+  font-size:1rem;
+  line-height:1;
+  text-shadow:0 0 18px var(--gold-soft);
+}
+.topbar .title{letter-spacing:.02em}
+
+/* ============================================================
+   قهرمان
+   ============================================================ */
+.hero{
+  position:relative;
+  min-height:100vh;
+  min-height:100svh;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  isolation:isolate;
+}
+#flow{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  pointer-events:none;
+  z-index:0;
+}
+.hero::after{
+  content:'';
+  position:absolute;inset:0;z-index:1;
+  pointer-events:none;
+  background:radial-gradient(ellipse 70% 60% at 50% 48%,
+    rgba(8,8,11,0) 0%,
+    rgba(8,8,11,.35) 52%,
+    rgba(8,8,11,.86) 82%,
+    var(--bg) 100%);
+}
+.hero-inner{
+  position:relative;z-index:2;
+  text-align:center;
+  padding:0 26px;
+  max-width:900px;
+}
+.hero-eyebrow{
+  margin:0 0 18px;
+  font-size:.8rem;
+  font-weight:400;
+  letter-spacing:.16em;
+  color:var(--gold);
+  opacity:0;
+  animation:rise 1.2s var(--ease) .25s forwards;
+}
+.hero h1{
+  margin:0;
+  font-size:clamp(3.1rem,13vw,8.5rem);
+  font-weight:900;
+  line-height:1.05;
+  background:linear-gradient(178deg,#ffffff 0%,#f3e6c8 38%,#c99f52 78%,#8a6a2c 100%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  text-shadow:0 0 80px rgba(217,164,65,.14);
+  opacity:0;
+  animation:rise 1.4s var(--ease) .45s forwards;
+}
+.hero-lede{
+  margin:26px auto 0;
+  max-width:44ch;
+  font-size:clamp(.95rem,2.3vw,1.12rem);
+  line-height:2.05;
+  color:var(--ink-dim);
+  opacity:0;
+  animation:rise 1.4s var(--ease) .75s forwards;
+}
+
+@keyframes rise{
+  from{opacity:0;transform:translateY(34px);filter:blur(10px)}
+  to{opacity:1;transform:none;filter:blur(0)}
+}
+
+/* راهنمای اسکرول */
+.scroll-hint{
+  position:absolute;
+  bottom:30px;left:50%;z-index:3;
+  transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+  background:none;border:0;padding:8px;
+  color:var(--ink-faint);
+  font-family:var(--sans);
+  font-size:.72rem;
+  letter-spacing:.1em;
+  cursor:pointer;
+  opacity:0;
+  animation:rise 1.2s var(--ease) 1.2s forwards;
+  transition:color .4s var(--ease);
+}
+.scroll-hint:hover{color:var(--gold)}
+.scroll-hint .bar{
+  width:1px;height:52px;
+  background:linear-gradient(180deg,var(--gold),rgba(217,164,65,0));
+  transform-origin:top;
+  animation:beam 2.6s ease-in-out infinite;
+}
+@keyframes beam{
+  0%,100%{transform:scaleY(.35);opacity:.35}
+  50%    {transform:scaleY(1);opacity:1}
+}
+
+/* ============================================================
+   بلوک‌ها
+   ============================================================ */
+.block{
+  position:relative;
+  max-width:var(--maxw);
+  margin:0 auto;
+  padding:clamp(88px,13vh,168px) 26px;
+}
+.block.wide{max-width:920px}
+
+.eyebrow{
+  display:flex;align-items:center;gap:13px;
+  margin:0 0 26px;
+  font-family:var(--mono);
+  font-size:.74rem;
+  font-weight:400;
+  letter-spacing:.12em;
+  color:var(--gold);
+}
+.eyebrow i{
+  flex:none;
+  width:34px;height:1px;
+  background:currentColor;
+  opacity:.38;
+}
+
+h2{
+  margin:0 0 26px;
+  font-size:clamp(1.85rem,5.2vw,3rem);
+  font-weight:700;
+  line-height:1.4;
+  color:#fff;
+  letter-spacing:-.005em;
+}
+.block p{
+  margin:0 0 22px;
+  font-size:clamp(1rem,2.1vw,1.1rem);
+  line-height:2.1;
+  color:var(--ink-dim);
+}
+.block p strong{
+  color:var(--ink);
+  font-weight:500;
+}
+.block p em{
+  font-style:normal;
+  color:var(--gold);
+  font-weight:400;
+}
+
+.rule{
+  height:1px;
+  max-width:var(--maxw);
+  margin:0 auto;
+  background:linear-gradient(90deg,transparent,var(--line) 22%,var(--line) 78%,transparent);
+}
+
+/* ============================================================
+   ظاهر شدن
+   ============================================================ */
+.reveal{
+  opacity:0;
+  transform:translateY(28px);
+  transition:opacity 1s var(--ease) var(--d,0s),
+             transform 1s var(--ease) var(--d,0s);
+}
+.reveal.in{opacity:1;transform:none}
+
+/* ============================================================
+   عدد φ
+   ============================================================ */
+.phi-display{
+  display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 20px;
+  margin:42px 0 8px;
+  padding:26px 0;
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+}
+.phi-sym{
+  font-family:var(--mono);
+  font-size:clamp(3.4rem,11vw,5.4rem);
+  line-height:.9;
+  color:var(--gold);
+  text-shadow:0 0 50px var(--gold-glow);
+}
+.phi-val{
+  font-family:var(--mono);
+  font-size:clamp(.98rem,3.2vw,1.5rem);
+  letter-spacing:.06em;
+  color:var(--ink);
+  direction:ltr;
+  unicode-bidi:embed;
+}
+.phi-eq{
+  font-family:var(--mono);
+  font-size:.9rem;
+  color:var(--ink-faint);
+  letter-spacing:.04em;
+  direction:ltr;
+}
+
+/* ============================================================
+   مارپیچ
+   ============================================================ */
+.spiral-wrap{
+  margin:54px auto 0;
+  max-width:540px;
+  position:relative;
+}
+.spiral-wrap::before{
+  content:'';
+  position:absolute;inset:-18% -10%;
+  background:radial-gradient(circle at 45% 45%,var(--gold-glow),transparent 62%);
+  pointer-events:none;
+  filter:blur(12px);
+}
+.spiral-wrap svg{
+  position:relative;
+  width:100%;height:auto;
+  overflow:visible;
+}
+.spiral-sq{
+  fill:rgba(217,164,65,.022);
+  stroke:rgba(236,231,221,.1);
+  stroke-width:.0022;
+  transition:fill .9s var(--ease),stroke .9s var(--ease);
+}
+.spiral-sq.lit{
+  fill:rgba(217,164,65,.055);
+  stroke:rgba(217,164,65,.3);
+}
+.spiral-path{
+  fill:none;
+  stroke:var(--gold);
+  stroke-width:.0065;
+  stroke-linecap:round;
+  filter:drop-shadow(0 0 6px rgba(217,164,65,.4));
+}
+.spiral-caption{
+  margin-top:22px;
+  text-align:center;
+  font-family:var(--mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  color:var(--ink-faint);
+}
+
+/* ============================================================
+   فیبوناچی
+   ============================================================ */
+.fib-seq{
+  display:flex;flex-wrap:wrap;gap:9px;
+  margin:40px 0 12px;
+}
+.fib-seq span{
+  font-family:var(--mono);
+  font-size:.92rem;
+  padding:7px 15px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  color:var(--ink-faint);
+  direction:ltr;
+  transition:color .7s var(--ease),border-color .7s var(--ease),
+             background .7s var(--ease),box-shadow .7s var(--ease),
+             transform .7s var(--ease);
+}
+.fib-seq span.on{
+  color:var(--gold);
+  border-color:var(--gold-soft);
+  background:rgba(217,164,65,.05);
+  box-shadow:0 0 26px -8px var(--gold-soft);
+  transform:translateY(-2px);
+}
+
+/* خط همگرایی */
+.converge{
+  margin:44px 0 0;
+  padding:26px 20px 18px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:linear-gradient(180deg,rgba(255,255,255,.012),transparent);
+}
+.converge svg{width:100%;height:auto;overflow:visible}
+.converge-title{
+  margin:0 0 18px;
+  font-family:var(--mono);
+  font-size:.72rem;
+  letter-spacing:.13em;
+  color:var(--ink-faint);
+}
+.cv-dot{
+  fill:var(--ink-faint);
+  opacity:0;
+  transition:opacity .9s var(--ease) var(--d,0s),fill .9s var(--ease) var(--d,0s);
+}
+.cv-dot.on{opacity:1;fill:var(--gold)}
+.cv-line{
+  stroke:var(--gold);
+  stroke-width:.9;
+  stroke-dasharray:3 4;
+  opacity:0;
+  transition:opacity 1.4s var(--ease) .5s;
+}
+.cv-line.on{opacity:.65}
+.cv-label{
+  fill:var(--gold);
+  font-family:var(--mono);
+  font-size:4.2px;
+  direction:ltr;
+  opacity:0;
+  transition:opacity 1.2s var(--ease) .8s;
+}
+.cv-label.on{opacity:1}
+.cv-axis{
+  stroke:rgba(236,231,221,.13);
+  stroke-width:.7;
+}
+.cv-tick{
+  fill:var(--ink-faint);
+  font-family:var(--mono);
+  font-size:3.4px;
+  direction:ltr;
+}
+
+/* ============================================================
+   بوم‌ها
+   ============================================================ */
+.canvas-frame{
+  position:relative;
+  margin:52px auto 0;
+  border:1px solid var(--line);
+  border-radius:16px;
+  overflow:hidden;
+  background:radial-gradient(ellipse at 50% 100%,rgba(217,164,65,.045),transparent 62%),
+             linear-gradient(180deg,rgba(255,255,255,.014),transparent);
+}
+.canvas-frame::after{
+  content:'';
+  position:absolute;inset:0;
+  pointer-events:none;
+  box-shadow:inset 0 0 70px rgba(0,0,0,.6);
+  border-radius:16px;
+}
+.tree-wrap{max-width:540px;aspect-ratio:1/.86}
+.harm-wrap{max-width:580px;aspect-ratio:1/1}
+.canvas-frame canvas{
+  width:100%;height:100%;
+  display:block;
+}
+
+/* ============================================================
+   پایان
+   ============================================================ */
+.closing{
+  max-width:var(--maxw);
+  margin:0 auto;
+  padding:clamp(96px,15vh,180px) 26px clamp(60px,9vh,90px);
+  text-align:center;
+}
+.closing .quote{
+  font-size:clamp(1.15rem,3.1vw,1.6rem);
+  font-weight:300;
+  line-height:2.15;
+  color:var(--ink);
+  margin:0 auto;
+  max-width:34ch;
+}
+.closing .quote .accent{color:var(--gold)}
+
+footer{
+  border-top:1px solid var(--line);
+  padding:30px 26px 46px;
+  text-align:center;
+  font-family:var(--mono);
+  font-size:.7rem;
+  letter-spacing:.13em;
+  color:var(--ink-faint);
+}
+footer .phi{
+  color:var(--gold);
+  font-size:1rem;
+  display:block;
+  margin-bottom:12px;
+  text-shadow:0 0 20px var(--gold-soft);
+}
+
+/* ============================================================
+   واکنش‌گرایی
+   ============================================================ */
+@media (max-width:600px){
+  .topbar{padding:14px 18px}
+  .block{padding-left:20px;padding-right:20px}
+  .hero-lede{max-width:34ch}
+  .converge{padding:20px 14px 14px}
+}
+
+/* ============================================================
+   احترام به تنظیمات کاربر
+   ============================================================ */
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+  }
+  .reveal{opacity:1;transform:none}
+  .hero-eyebrow,.hero h1,.hero-lede,.scroll-hint{opacity:1;animation:none}
+  .grain{animation:none}
+}
+</style>
+</head>
+<body>
+
+<div class="grain" aria-hidden="true"></div>
+<div class="progress" id="progress" aria-hidden="true"></div>
+
+<div class="topbar" id="topbar" aria-hidden="true">
+  <span class="mark">φ</span>
+  <span class="title">سکوتِ عددها</span>
+</div>
+
+<main>
+
+  <!-- ══════════════════ قهرمان ══════════════════ -->
+  <section class="hero">
+    <canvas id="flow" aria-hidden="true"></canvas>
+    <div class="hero-inner">
+      <p class="hero-eyebrow">در جست‌وجوی نظمی پنهان</p>
+      <h1>سکوتِ عددها</h1>
+      <p class="hero-lede">
+        طبیعت با ریاضیات حرف می‌زند؛ از مارپیچ کهکشان‌ها تا رگبرگ یک برگ.
+        اینجا سفری کوتاه است در زبان مشترکی که قرن‌هاست می‌آموزیم بخوانیم.
+      </p>
+    </div>
+    <button class="scroll-hint" id="scrollHint" type="button" aria-label="رفتن به بخش بعد">
+      <span>کمی پایین‌تر</span>
+      <span class="bar" aria-hidden="true"></span>
+    </button>
+  </section>
+
+  <!-- ══════════════════ ۰۰ — آغاز ══════════════════ -->
+  <section class="block" id="intro">
+    <p class="eyebrow"><span>۰۰</span><i></i>آغاز</p>
+    <h2 class="reveal">نظم، پیش از نام‌ها</h2>
+    <p class="reveal" style="--d:.08s">
+      انسان عدد را اختراع نکرد؛ آن را <strong>دید</strong>. هزاران سال پیش از آنکه خطی برای
+      نوشتن داشته باشیم، الگوها را در آسمان می‌شمردیم و در دانه‌های گل آفتابگردان.
+      ریاضیات، شرحِ دیرهنگامِ چیزی است که همیشه آن‌جا بود.
+    </p>
+    <p class="reveal" style="--d:.16s">
+      هر جا نظمی هست، جایی هم برای عدد هست. و هر جا عددی هست، پرسشی هست:
+      <em>چرا این‌گونه؟</em>
+    </p>
+  </section>
+
+  <div class="rule" aria-hidden="true"></div>
+
+  <!-- ══════════════════ ۰۱ — نسبت طلایی ══════════════════ -->
+  <section class="block wide">
+    <p class="eyebrow"><span>۰۱</span><i></i>نسبت طلایی</p>
+    <h2 class="reveal">تقسیمی که زیبایی را تعریف می‌کند</h2>
+    <p class="reveal" style="--d:.08s">
+      پاره‌خطی را در نظر بگیرید. آن را چنان به دو بخش تقسیم کنید که نسبتِ کل به بخش بزرگ‌تر،
+      با نسبتِ بخش بزرگ‌تر به بخش کوچک‌تر برابر باشد. این کار تنها یک جواب دارد:
+    </p>
+
+    <div class="phi-display reveal" style="--d:.16s">
+      <span class="phi-sym">φ</span>
+      <span class="phi-val">1.618033988749895…</span>
+    </div>
+
+    <p class="reveal" style="--d:.22s">
+      این عدد را <strong>فی</strong> می‌نامیم. در نسبتِ مارپیچ صدف‌ها، در چیدمان دانه‌های
+      آفتابگردان، در تناسبِ بناهایی که هزاران سال پیش ساخته شده‌اند — همه‌جا حاضر است.
+      شاید نه به این دلیل که کسی عمداً آن را به کار برده، بلکه به این دلیل که
+      <em>چشم انسان ناخودآگاه آن را می‌شناسد</em>.
+    </p>
+
+    <div class="spiral-wrap reveal" style="--d:.1s">
+      <svg id="spiralSvg" viewBox="0 0 1 1" role="img" aria-label="مارپیچ طلایی و مربع‌های تودرتو"></svg>
+    </div>
+    <p class="spiral-caption reveal" style="--d:.2s">مارپیچ طلایی — هر چرخش، φ برابر دورتر</p>
+  </section>
+
+  <div class="rule" aria-hidden="true"></div>
+
+  <!-- ══════════════════ ۰۲ — فیبوناچی ══════════════════ -->
+  <section class="block wide">
+    <p class="eyebrow"><span>۰۲</span><i></i>دنبالهٔ فیبوناچی</p>
+    <h2 class="reveal">هر عدد، حاصل جمع دو عدد پیش از خودش</h2>
+    <p class="reveal" style="--d:.08s">
+      از یک و یک شروع می‌کنیم و تا هر کجا که بخواهیم پیش می‌رویم. ساده‌ترین قاعده‌ی
+      جهان، و درست همین سادگی است که شگفتی می‌سازد.
+    </p>
+
+    <div class="fib-seq" id="fibSeq" aria-label="دنبالهٔ فیبوناچی"></div>
+
+    <p class="reveal" style="--d:.12s">
+      و شگفتی این‌جاست: نسبت هر عدد به عدد پیشین، آرام‌آرام به φ میل می‌کند.
+      هرچه پیش‌تر برویم، نزدیک‌تر. انگار دنباله، در بی‌نهایت، به همان عددی می‌رسد
+      که پیش از این دیدیم.
+    </p>
+
+    <div class="converge reveal" style="--d:.18s">
+      <p class="converge-title">همگرایی به φ</p>
+      <svg id="convergeSvg" viewBox="0 0 100 34" role="img" aria-label="نمودار همگرایی نسبت‌های فیبوناچی به نسبت طلایی"></svg>
+    </div>
+  </section>
+
+  <div class="rule" aria-hidden="true"></div>
+
+  <!-- ══════════════════ ۰۳ — فراکتال ══════════════════ -->
+  <section class="block wide">
+    <p class="eyebrow"><span>۰۳</span><i></i>فراکتال</p>
+    <h2 class="reveal">شکلی که در هر مقیاسی، خودش است</h2>
+    <p class="reveal" style="--d:.08s">
+      یک شاخه، نسخهٔ کوچکی از درخت است؛ و آن شاخه، نسخهٔ کوچکی از خودش.
+      بینهایت بار می‌توانی نزدیک‌تر شوی و باز هم همان الگو را ببینی.
+      فراکتال، هندسه‌ی چیزهایی است که پایانی ندارند — و همین است که آن‌ها را
+      به طبیعت شبیه می‌کند.
+    </p>
+
+    <div class="canvas-frame tree-wrap reveal" style="--d:.14s">
+      <canvas id="tree" aria-label="درخت فراکتالی"></canvas>
+    </div>
+    <p class="spiral-caption reveal" style="--d:.2s">یک درخت دوتایی — ۹ سطح، ۱۰۲۲ شاخه</p>
+  </section>
+
+  <div class="rule" aria-hidden="true"></div>
+
+  <!-- ══════════════════ ۰۴ — بی‌نهایت ══════════════════ -->
+  <section class="block wide">
+    <p class="eyebrow"><span>۰۴</span><i></i>بی‌نهایت</p>
+    <h2 class="reveal">بی‌نهایت یک عدد نیست؛ یک رفتار است</h2>
+    <p class="reveal" style="--d:.08s">
+      کانتور نشان داد که بعضی بی‌نهایت‌ها از بعضی دیگر بزرگ‌ترند — که بی‌نهایتِ نقطه‌های
+      یک خط، بی‌شمارتر از بی‌نهایتِ عددهای طبیعی است. ذهن می‌لغزد؛
+      <strong>ریاضیات اما آرام می‌ماند</strong>.
+    </p>
+
+    <div class="canvas-frame harm-wrap reveal" style="--d:.14s">
+      <canvas id="harm" aria-label="نمودار هارمونوگراف"></canvas>
+    </div>
+    <p class="spiral-caption reveal" style="--d:.2s">هارمونوگراف — دو آونگ، یک منحنی بی‌پایان</p>
+  </section>
+
+  <!-- ══════════════════ پایان ══════════════════ -->
+  <section class="closing">
+    <p class="quote reveal">
+      هرچه دقیق‌تر نگاه کنی، الگوها بیشتر می‌شوند.<br>
+      و هرچه الگوها بیشتر شوند، پرسش‌ها بیشتر می‌شوند.<br>
+      <span class="accent">و این، شاید تمامِ آن چیزی باشد که ریاضیات هست:</span><br>
+      راهی برای پرسیدنِ دقیق‌تر.
+    </p>
+  </section>
+
+</main>
+
+<footer>
+  <span class="phi">φ</span>
+  سکوتِ عددها · ساخته‌شده با علاقه به الگوها
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ─────────────────────────────────────────────────────────
+     ابزارها
+     ───────────────────────────────────────────────────────── */
+  const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => Array.prototype.slice.call((r || document).querySelectorAll(s));
+
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  function svgEl(name, attrs) {
+    const el = document.createElementNS(SVGNS, name);
+    if (attrs) for (const k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     نوار پیشرفت + نوار بالا
+     ───────────────────────────────────────────────────────── */
+  const progressEl = $('#progress');
+  const topbarEl = $('#topbar');
+  const docHeight = () => document.documentElement.scrollHeight - window.innerHeight;
+
+  function onScroll() {
+    const max = docHeight();
+    const p = max > 0 ? clamp(window.scrollY / max, 0, 1) : 0;
+    progressEl.style.width = (p * 100).toFixed(2) + '%';
+    topbarEl.classList.toggle('show', window.scrollY > window.innerHeight * 0.6);
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     ظاهر شدن با اسکرول
+     ───────────────────────────────────────────────────────── */
+  const revealIO = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        revealIO.unobserve(e.target);
+      }
+    });
+  }, { rootMargin: '0px 0px -10% 0px', threshold: 0.08 });
+
+  $$('.reveal').forEach(function (el) { revealIO.observe(el); });
+
+  /* ═════════════════════════════════════════════════════════
+     ۱ — میدان جریان در قهرمان
+     ═════════════════════════════════════════════════════════ */
+  (function initFlow() {
+    const canvas = $('#flow');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d', { alpha: false });
+
+    let W = 0, H = 0, dpr = 1;
+    let particles = [];
+    let t = 0;
+    let running = false;
+    let raf = null;
+
+    function field(x, y, time) {
+      const s = 0.0016;
+      return (
+        Math.sin(x * s + time * 0.62) * 1.55 +
+        Math.cos(y * s * 1.28 - time * 0.44) * 1.55 +
+        Math.sin((x + y) * s * 0.62 + time * 0.31) * 1.15
+      );
+    }
+
+    function spawn() {
+      const count = Math.round(clamp((W * H) / 13500, 70, 340));
+      particles = [];
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: Math.random() * W,
+          y: Math.random() * H,
+          cool: Math.random() < 0.26,
+          a: 0.045 + Math.random() * 0.115
+        });
+      }
+    }
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = Math.max(1, Math.round(rect.width));
+      H = Math.max(1, Math.round(rect.height));
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = '#08080b';
+      ctx.fillRect(0, 0, W, H);
+      spawn();
+    }
+
+    function frame() {
+      ctx.fillStyle = 'rgba(8,8,11,0.055)';
+      ctx.fillRect(0, 0, W, H);
+      ctx.lineWidth = 1;
+      ctx.lineCap = 'round';
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        const ang = field(p.x, p.y, t);
+        const px = p.x, py = p.y;
+
+        p.x += Math.cos(ang) * 1.35;
+        p.y += Math.sin(ang) * 1.35;
+
+        if (p.x < -12 || p.x > W + 12 || p.y < -12 || p.y > H + 12) {
+          p.x = Math.random() * W;
+          p.y = Math.random() * H;
+          continue;
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(p.x, p.y);
+        ctx.strokeStyle = p.cool
+          ? 'rgba(150,192,214,' + (p.a * 0.62).toFixed(3) + ')'
+          : 'rgba(217,164,65,' + p.a.toFixed(3) + ')';
+        ctx.stroke();
+      }
+
+      t += 0.0034;
+      raf = requestAnimationFrame(frame);
+    }
+
+    function start() {
+      if (running || REDUCED) return;
+      running = true;
+      raf = requestAnimationFrame(frame);
+    }
+    function stop() {
+      running = false;
+      if (raf) cancelAnimationFrame(raf);
+      raf = null;
+    }
+
+    resize();
+    if (REDUCED) {
+      // یک فریم ایستا
+      for (let i = 0; i < 60; i++) frameStepStatic();
+    }
+
+    function frameStepStatic() {
+      ctx.fillStyle = 'rgba(8,8,11,0.06)';
+      ctx.fillRect(0, 0, W, H);
+      ctx.lineWidth = 1;
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        const ang = field(p.x, p.y, t);
+        const px = p.x, py = p.y;
+        p.x += Math.cos(ang) * 1.35;
+        p.y += Math.sin(ang) * 1.35;
+        if (p.x < -12 || p.x > W + 12 || p.y < -12 || p.y > H + 12) {
+          p.x = Math.random() * W; p.y = Math.random() * H; continue;
+        }
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(p.x, p.y);
+        ctx.strokeStyle = 'rgba(217,164,65,' + (p.a * 0.8).toFixed(3) + ')';
+        ctx.stroke();
+      }
+      t += 0.004;
+    }
+
+    // توقف وقتی از دید خارج است
+    new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) start(); else stop();
+      });
+    }, { threshold: 0.02 }).observe(canvas);
+
+    let rzTimer = null;
+    window.addEventListener('resize', function () {
+      clearTimeout(rzTimer);
+      rzTimer = setTimeout(function () {
+        resize();
+        if (REDUCED) for (let i = 0; i < 60; i++) frameStepStatic();
+      }, 180);
+    }, { passive: true });
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) stop();
+      else start();
+    });
+  })();
+
+  /* ═════════════════════════════════════════════════════════
+     ۲ — مارپیچ طلایی
+     ═════════════════════════════════════════════════════════ */
+  const spiralCtrl = (function buildSpiral() {
+    const svg = $('#spiralSvg');
+    if (!svg) return null;
+
+    const PHI = (1 + Math.sqrt(5)) / 2;
+    const N = 13;
+    const DIRS = ['right', 'bottom', 'left', 'top'];
+    const PAD = 0.045;
+
+    svg.setAttribute('viewBox',
+      (-PAD) + ' ' + (-PAD) + ' ' + (PHI + PAD * 2) + ' ' + (1 + PAD * 2));
+
+    let rect = { x: 0, y: 0, w: PHI, h: 1 };
+    const squares = [];
+
+    for (let i = 0; i < N; i++) {
+      const dir = DIRS[i % 4];
+      const s = Math.min(rect.w, rect.h);
+      let sq;
+
+      if (dir === 'right') {
+        sq = { x: rect.x + rect.w - s, y: rect.y, s: s, dir: dir };
+        rect = { x: rect.x, y: rect.y, w: rect.w - s, h: rect.h };
+      } else if (dir === 'bottom') {
+        sq = { x: rect.x, y: rect.y + rect.h - s, s: s, dir: dir };
+        rect = { x: rect.x, y: rect.y, w: rect.w, h: rect.h - s };
+      } else if (dir === 'left') {
+        sq = { x: rect.x, y: rect.y, s: s, dir: dir };
+        rect = { x: rect.x + s, y: rect.y, w: rect.w - s, h: rect.h };
+      } else {
+        sq = { x: rect.x, y: rect.y, s: s, dir: dir };
+        rect = { x: rect.x, y: rect.y + s, w: rect.w, h: rect.h - s };
+      }
+      squares.push(sq);
+    }
+
+    function centerOf(sq) {
+      switch (sq.dir) {
+        case 'right':  return [sq.x, sq.y];
+        case 'bottom': return [sq.x + sq.s, sq.y];
+        case 'left':   return [sq.x + sq.s, sq.y + sq.s];
+        default:       return [sq.x, sq.y + sq.s];
+      }
+    }
+
+    // مربع‌ها
+    const sqGroup = svgEl('g');
+    squares.forEach(function (sq) {
+      const r = svgEl('rect', {
+        x: sq.x, y: sq.y, width: sq.s, height: sq.s,
+        'class': 'spiral-sq'
+      });
+      sqGroup.appendChild(r);
+      sq.el = r;
+    });
+    svg.appendChild(sqGroup);
+
+    // مسیر مارپیچ
+    let d = '';
+    squares.forEach(function (sq, i) {
+      const c = centerOf(sq);
+      const r = sq.s;
+      const a0 = i * Math.PI / 2;
+      const a1 = a0 + Math.PI / 2;
+      const x0 = c[0] + r * Math.cos(a0);
+      const y0 = c[1] + r * Math.sin(a0);
+      const x1 = c[0] + r * Math.cos(a1);
+      const y1 = c[1] + r * Math.sin(a1);
+      if (i === 0) d += 'M ' + x0.toFixed(5) + ' ' + y0.toFixed(5) + ' ';
+      d += 'A ' + r.toFixed(5) + ' ' + r.toFixed(5) + ' 0 0 1 ' +
+           x1.toFixed(5) + ' ' + y1.toFixed(5) + ' ';
+    });
+
+    const path = svgEl('path', { d: d, 'class': 'spiral-path' });
+    svg.appendChild(path);
+
+    let totalLen = 0;
+    try { totalLen = path.getTotalLength(); } catch (e) { totalLen = 0; }
+
+    if (totalLen > 0) {
+      path.style.strokeDasharray = totalLen;
+      path.style.strokeDashoffset = totalLen;
+    }
+
+    // مسیر در RTL معکوس دیده می‌شود؛ آن را آینه می‌کنیم تا از بیرون به درون برود
+    sqGroup.setAttribute('transform', 'translate(' + PHI + ',0) scale(-1,1)');
+    path.setAttribute('transform', 'translate(' + PHI + ',0) scale(-1,1)');
+
+    return { squares: squares, path: path, len: totalLen, N: N };
+  })();
+
+  /* ═════════════════════════════════════════════════════════
+     ۳ — دنبالهٔ فیبوناچی + همگرایی
+     ═════════════════════════════════════════════════════════ */
+  (function buildFibonacci() {
+    const wrap = $('#fibSeq');
+    if (!wrap) return;
+
+    const nums = [1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233];
+    const spans = nums.map(function (n) {
+      const s = document.createElement('span');
+      s.textContent = n;
+      wrap.appendChild(s);
+      return s;
+    });
+
+    let lit = false;
+    new IntersectionObserver(function (entries, obs) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting || lit) return;
+        lit = true;
+        spans.forEach(function (s, i) {
+          setTimeout(function () { s.classList.add('on'); }, i * 65);
+        });
+        obs.disconnect();
+      });
+    }, { threshold: 0.35 }).observe(wrap);
+
+    /* ── نمودار همگرایی ── */
+    const svg = $('#convergeSvg');
+    if (!svg) return;
+
+    const pairs = [[3,2],[5,3],[8,5],[13,8],[21,13],[34,21],[55,34],[89,55]];
+    const PHI = (1 + Math.sqrt(5)) / 2;
+    const LO = 1.485, HI = 1.70;
+    const X0 = 6, X1 = 94, BASE = 20;
+    const mapX = function (v) { return X0 + ((v - LO) / (HI - LO)) * (X1 - X0); };
+
+    // محور
+    svg.appendChild(svgEl('line', {
+      x1: X0, y1: BASE, x2: X1, y2: BASE, 'class': 'cv-axis'
+    }));
+
+    // تیک‌ها
+    [1.5, 1.55, 1.6, 1.65].forEach(function (v) {
+      const x = mapX(v);
+      svg.appendChild(svgEl('line', {
+        x1: x, y1: BASE, x2: x, y2: BASE + 2.2, 'class': 'cv-axis'
+      }));
+      const txt = svgEl('text', {
+        x: x, y: BASE + 7.6, 'text-anchor': 'middle', 'class': 'cv-tick'
+      });
+      txt.textContent = v.toFixed(2);
+      svg.appendChild(txt);
+    });
+
+    // خط φ
+    const phiX = mapX(PHI);
+    const phiLine = svgEl('line', {
+      x1: phiX, y1: 4, x2: phiX, y2: BASE + 2.5, 'class': 'cv-line'
+    });
+    svg.appendChild(phiLine);
+
+    const phiLabel = svgEl('text', {
+      x: phiX, y: 2.6, 'text-anchor': 'middle', 'class': 'cv-label'
+    });
+    phiLabel.textContent = 'φ = 1.61803';
+    svg.appendChild(phiLabel);
+
+    // نقطه‌ها
+    const dots = pairs.map(function (p, i) {
+      const v = p[0] / p[1];
+      const x = mapX(v);
+      const dot = svgEl('circle', {
+        cx: x, cy: BASE - 6.5, r: 1.5, 'class': 'cv-dot'
+      });
+      dot.style.setProperty('--d', (i * 0.09 + 0.2) + 's');
+      svg.appendChild(dot);
+
+      const t = svgEl('text', {
+        x: x, y: BASE - 10.5, 'text-anchor': 'middle', 'class': 'cv-tick'
+      });
+      t.textContent = p[0] + '/' + p[1];
+      t.style.opacity = '0';
+      svg.appendChild(t);
+      return { dot: dot, label: t };
+    });
+
+    let shown = false;
+    new IntersectionObserver(function (entries, obs) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting || shown) return;
+        shown = true;
+        phiLine.classList.add('on');
+        phiLabel.classList.add('on');
+        dots.forEach(function (d, i) {
+          d.dot.classList.add('on');
+          setTimeout(function () { d.label.style.opacity = '.55'; }, 420 + i * 90);
+        });
+        obs.disconnect();
+      });
+    }, { threshold: 0.4 }).observe(svg);
+  })();
+
+  /* ═════════════════════════════════════════════════════════
+     ۴ — درخت فراکتالی
+     ═════════════════════════════════════════════════════════ */
+  (function initTree() {
+    const canvas = $('#tree');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    let W = 0, H = 0, dpr = 1;
+    let raf = null, played = false, lastProg = 0;
+
+    const MAX_DEPTH = 9;
+    const SPREAD = 0.425;
+    const RATIO = 0.735;
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = Math.max(1, rect.width);
+      H = Math.max(1, rect.height);
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function draw(prog) {
+      ctx.clearRect(0, 0, W, H);
+      const baseLen = H * 0.29;
+
+      (function branch(x, y, len, ang, depth) {
+        if (depth > MAX_DEPTH) return;
+
+        const start = (depth - 1) / MAX_DEPTH;
+        const local = (prog - start) * MAX_DEPTH;
+        if (local <= 0) return;
+
+        const eased = 1 - Math.pow(1 - Math.min(local, 1), 3);
+        const L = len * eased;
+        const x2 = x + Math.cos(ang) * L;
+        const y2 = y + Math.sin(ang) * L;
+
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x2, y2);
+        ctx.lineWidth = Math.max(0.45, (MAX_DEPTH - depth + 1) * 0.52);
+        ctx.strokeStyle = 'hsla(' + (36 + depth * 2.4) + ',62%,' +
+                          (56 + depth * 2.2) + '%,' +
+                          (0.86 - depth * 0.065).toFixed(3) + ')';
+        ctx.lineCap = 'round';
+        ctx.stroke();
+
+        branch(x2, y2, len * RATIO, ang - SPREAD, depth + 1);
+        branch(x2, y2, len * RATIO, ang + SPREAD, depth + 1);
+      })(W / 2, H * 0.93, baseLen, -Math.PI / 2, 1);
+    }
+
+    function play() {
+      if (played) return;
+      played = true;
+
+      if (REDUCED) { lastProg = 1; draw(1); return; }
+
+      const t0 = performance.now();
+      const DUR = 4400;
+
+      (function step(now) {
+        const p = clamp((now - t0) / DUR, 0, 1);
+        lastProg = p;
+        draw(p);
+        if (p < 1) raf = requestAnimationFrame(step);
+        else raf = null;
+      })(t0);
+    }
+
+    resize();
+
+    new IntersectionObserver(function (entries, obs) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { play(); obs.disconnect(); }
+      });
+    }, { threshold: 0.28 }).observe(canvas);
+
+    let rzTimer = null;
+    window.addEventListener('resize', function () {
+      clearTimeout(rzTimer);
+      rzTimer = setTimeout(function () {
+        resize();
+        if (played) draw(lastProg);
+      }, 180);
+    }, { passive: true });
+  })();
+
+  /* ═════════════════════════════════════════════════════════
+     ۵ — هارمونوگراف
+     ═════════════════════════════════════════════════════════ */
+  (function initHarmonograph() {
+    const canvas = $('#harm');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    let W = 0, H = 0, dpr = 1, S = 1, CX = 0, CY = 0;
+    let running = false, raf = null;
+    let hp = null, ht = 0, phase = 'draw', fadeA = 0;
+
+    function newParams() {
+      return {
+        x: [
+          { f: 2 + (Math.random() - 0.5) * 0.03, p: Math.random() * 6.283, a: 1,    d: 0.0011 + Math.random() * 0.0008 },
+          { f: 3 + (Math.random() - 0.5) * 0.03, p: Math.random() * 6.283, a: 0.62, d: 0.0016 + Math.random() * 0.0010 }
+        ],
+        y: [
+          { f: 2 + (Math.random() - 0.5) * 0.03, p: Math.random() * 6.283, a: 1,    d: 0.0011 + Math.random() * 0.0008 },
+          { f: 3 + (Math.random() - 0.5) * 0.03, p: Math.random() * 6.283, a: 0.62, d: 0.0016 + Math.random() * 0.0010 }
+        ]
+      };
+    }
+
+    function point(p, t) {
+      let x = 0, y = 0;
+      for (let i = 0; i < p.x.length; i++) {
+        const c = p.x[i];
+        x += c.a * Math.sin(c.f * t + c.p) * Math.exp(-c.d * t);
+      }
+      for (let i = 0; i < p.y.length; i++) {
+        const c = p.y[i];
+        y += c.a * Math.sin(c.f * t + c.p) * Math.exp(-c.d * t);
+      }
+      return [x, y];
+    }
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = Math.max(1, rect.width);
+      H = Math.max(1, rect.height);
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      S = Math.min(W, H) * 0.30;
+      CX = W / 2;
+      CY = H / 2;
+    }
+
+    const DT = 0.014;
+    const STEPS = 18;
+    const MAX_T = 250;
+
+    function frame() {
+      if (phase === 'draw') {
+        let hx = 0, hy = 0;
+        for (let i = 0; i < STEPS; i++) {
+          const a = point(hp, ht);
+          ht += DT;
+          const b = point(hp, ht);
+
+          const ax = CX + a[0] * S, ay = CY + a[1] * S;
+          const bx = CX + b[0] * S, by = CY + b[1] * S;
+
+          // پرش‌های بزرگ را رد کن
+          const dx = bx - ax, dy = by - ay;
+          if (dx * dx + dy * dy < 900) {
+            ctx.beginPath();
+            ctx.moveTo(ax, ay);
+            ctx.lineTo(bx, by);
+            const hue = 34 + Math.sin(ht * 0.045) * 9;
+            ctx.strokeStyle = 'hsla(' + hue.toFixed(1) + ',64%,58%,0.52)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+
+          if (ht > MAX_T) { phase = 'hold'; ht = MAX_T; break; }
+        }
+        if (ht >= MAX_T) phase = 'hold';
+
+      } else if (phase === 'hold') {
+        fadeA += 0.004;
+        if (fadeA > 1) {
+          ctx.clearRect(0, 0, W, H);
+          hp = newParams();
+          ht = 0;
+          phase = 'draw';
+          fadeA = 0;
+        }
+
+      } else {
+        phase = 'hold';
+      }
+
+      raf = requestAnimationFrame(frame);
+    }
+
+    function start() {
+      if (running || REDUCED) return;
+      running = true;
+      raf = requestAnimationFrame(frame);
+    }
+    function stop() {
+      running = false;
+      if (raf) cancelAnimationFrame(raf);
+      raf = null;
+    }
+
+    resize();
+    hp = newParams();
+
+    if (REDUCED) {
+      // یک منحنی کامل، یک‌بار
+      ctx.clearRect(0, 0, W, H);
+      let t = 0, prev = point(hp, 0);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'hsla(38,64%,58%,0.42)';
+      ctx.beginPath();
+      ctx.moveTo(CX + prev[0] * S, CY + prev[1] * S);
+      while (t < MAX_T) {
+        t += 0.05;
+        const c = point(hp, t);
+        ctx.lineTo(CX + c[0] * S, CY + c[1] * S);
+      }
+      ctx.stroke();
+      return;
+    }
+
+    new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) start(); else stop();
+      });
+    }, { threshold: 0.08 }).observe(canvas);
+
+    let rzTimer = null;
+    window.addEventListener('resize', function () {
+      clearTimeout(rzTimer);
+      rzTimer = setTimeout(resize, 180);
+    }, { passive: true });
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) stop();
+      else start();
+    });
+  })();
+
+  /* ═════════════════════════════════════════════════════════
+     اسکرول: نوار پیشرفت + مارپیچ
+     ═════════════════════════════════════════════════════════ */
+  const spiralWrap = $('.spiral-wrap');
+
+  function updateSpiral() {
+    if (!spiralCtrl || !spiralWrap) return;
+    const rect = spiralWrap.getBoundingClientRect();
+    const vh = window.innerHeight;
+
+    // از وقتی بالای مارپیچ به ۸۵٪ صفحه می‌رسد تا وقتی پایینش به ۳۵٪ برسد
+    const start = vh * 0.88;
+    const end = vh * 0.30;
+    const total = (rect.height + start - end);
+    const p = clamp((start - rect.top) / total, 0, 1);
+
+    if (spiralCtrl.len > 0) {
+      spiralCtrl.path.style.strokeDashoffset = String(spiralCtrl.len * (1 - p));
+    }
+
+    // مربع‌ها یکی‌یکی روشن شوند
+    const litCount = Math.floor(p * spiralCtrl.N * 1.05);
+    spiralCtrl.squares.forEach(function (sq, i) {
+      if (i < litCount) sq.el.classList.add('lit');
+      else sq.el.classList.remove('lit');
+    });
+  }
+
+  let ticking = false;
+  function onFrame() {
+    onScroll();
+    updateSpiral();
+    ticking = false;
+  }
+
+  window.addEventListener('scroll', function () {
+    if (!ticking) {
+      ticking = true;
+      requestAnimationFrame(onFrame);
+    }
+  }, { passive: true });
+
+  window.addEventListener('resize', function () {
+    if (!ticking) {
+      ticking = true;
+      requestAnimationFrame(onFrame);
+    }
+  }, { passive: true });
+
+  /* ─────────────────────────────────────────────────────────
+     راهنمای اسکرول
+     ───────────────────────────────────────────────────────── */
+  const hint = $('#scrollHint');
+  if (hint) {
+    hint.addEventListener('click', function () {
+      const target = $('#intro');
+      if (target) target.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'start' });
+    });
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     اجرای اولیه
+     ───────────────────────────────────────────────────────── */
+  onScroll();
+  updateSpiral();
+  setTimeout(function () { onScroll(); updateSpiral(); }, 260);
+
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () {
+      onScroll();
+      updateSpiral();
+    });
+  }
+
+})();
+</script>
+</body>
+  </html>
